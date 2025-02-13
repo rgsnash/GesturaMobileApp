@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "Gestura-MobileApp",
+    "slug": "Gestura-MobileApp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/logo.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/logo.png",
+          "resizeMode": "cover",
+          "backgroundColor": "#D9D9D9",
+          "enableFullScreenImage_legacy": true
+        }
+      ],
+      [
+        "expo-font", 
+        {
+          "fonts": [
+            "./assets/fonts/Oswald-Bold.ttf",
+            "./assets/fonts/Oswald-SemiBold.ttf",
+            "./assets/fonts/Oswald-Light.ttf",
+            "./assets/fonts/Oswald-ExtraLight.ttf",
+            "./assets/fonts/Oswald-Regular.ttf",
+            "./assets/fonts/Oswald-Medium.ttf",
+            "./assets/fonts/Montserrat-ExtraBold.ttf"
+          ]
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
