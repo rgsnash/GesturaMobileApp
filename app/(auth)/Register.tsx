@@ -45,18 +45,21 @@ const Register = () => {
         <Text className="font-Osregular text-3xl text-center text-gray-50 p-5"> REGISTRATION </Text>
       </View>
 
-      <FormField
+          <FormField
             title="Email"
             value={form.email}
-            handleChangeText={(e) => setForm({ ...form, email: e })}
+            handleChangeText={(e: string) => setForm({ ...form, email: e })}
             otherStyles="mt-7"
             keyboardType="email-address"
+            placeholder={""}
           />
 
           <FormField
             title="Password"
             value={form.password}
-            handleChangeText={(e) => setForm({ ...form, password: e })}
+            handleChangeText={(e: string) => setForm({ ...form, password: e })}
+            placeholder={""}
+            otherStyles={""}
           />
 
         <View className="flex-row items-center mb-4 justify-center">
@@ -72,7 +75,7 @@ const Register = () => {
         <CustomButton
             title="Register"
             handlePress={handleRegister}
-            containerStyles="w-[350px] ml-5"
+            containerStyles="w-[350px] ml-auto mr-auto"
             textStyles="text-2xl font-Osmedium text-gray-50 text-center"
           />
 
@@ -96,14 +99,15 @@ const Register = () => {
       </View>
 
       <Text className="mt-2">
-          <Text className="text-center text-purple-400 font-Osregular">
-                Already Have An Account?{''}
-      </Text>
-      <TouchableOpacity onPress={handleRegister}>
-         <Text className="text-gray-200 font-Osregular text-center text-decoration-line: underline">Log In</Text>
-      </TouchableOpacity>
+          <Text className="text-center text-purple-400 font-Osregular ml-auto mr-auto">
+                Already Have An Account?
+          </Text>
       </Text>
 
+      <TouchableOpacity onPress={handleRegister}>
+         <Text className="text-gray-200 font-Osregular text-center text-decoration-line: underline
+         ml-auto mr-auto mt-[-0.5%]">Log In</Text>
+      </TouchableOpacity>
 
     </ScrollView>
     

@@ -42,22 +42,25 @@ const Login = () => {
         <FormField
           title="Email"
           value={form.email}
-          handleChangeText={(e) => setForm({ ...form, email: e })}
+          handleChangeText={(e: string) => setForm({ ...form, email: e })}
           otherStyles="mt-3"
           keyboardType="email-address"
+          placeholder={""}
         />
 
         <FormField
           title="Password"
           value={form.password}
-          handleChangeText={(e) => setForm({ ...form, password: e })}
+          handleChangeText={(e: string) => setForm({ ...form, password: e })}
           secureTextEntry
+          placeholder={""}
+          otherStyles={""}
         />
 
         <CustomButton
           title="LOG IN"
           handlePress={handleLogin}
-          containerStyles="w-[350px] ml-5"
+          containerStyles="w-[350px] ml-auto mr-auto"
           textStyles="text-2xl font-Osmedium text-gray-50 text-center"
         />
 
