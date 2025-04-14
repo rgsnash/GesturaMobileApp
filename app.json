@@ -6,16 +6,43 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "gestura",
+    "extra": {
+      "SUPABASE_URL": "https://qutjxqklxkovjncqtmbv.supabase.co",
+      "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1dGp4cWtseGtvdmpuY3F0bWJ2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczODI0MTk2MiwiZXhwIjoyMDUzODE3OTYyfQ.glRiXJhP9m5dLYRpfqyg9hmm4vSAqdP-dVX4je1ELME",
+      "redirectUri": {
+        "development": "https://auth.expo.io/@ashleymuiu/Gestura-MobileApp",
+        "production": "gestura://oauth-redirect"
+      }
+    },
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": ["gestura"]
+          }
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "gestura",
+              "host": "oauth-redirect"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -49,7 +76,7 @@
       ]
     ],
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": false
     }
   }
 }

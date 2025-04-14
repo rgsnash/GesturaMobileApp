@@ -1,35 +1,80 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Image, Alert, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import CustomButton from '@/components/CustomButton';
-import FormField from '@/components/FormField';
+import CustomButton from '../../components/CustomButton';
+import FormField from '../../components/FormField';
 import { router } from 'expo-router';
-import images from '@/constants/images';
-import icons from '@/constants/icons';
+import images from '../../constants/images';
+import icons from '../../constants/icons';
 import { supabase } from '../../lib/gesturadb';
+
+import * as WebBrowser from 'expo-web-browser';
+import { makeRedirectUri } from 'expo-auth-session';
+
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false);
-
+  
+  
   async function signInWithEmail() {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    });
+   // const { error } = await supabase.auth.signInWithPassword({
+    //   email: email,
+    //   password: password,
+    // });
 
-    if (error) {
-      Alert.alert('Login Failed', error.message);
-    } else {
+    // if (error) {
+    //   Alert.alert('Login Failed', error.message);
+    // } else {
       router.replace('/(tabs)/home')
-    }
+    // }
     setLoading(false);
 
 
   }
+
+  const signInWithFacebook = async () => {
+    try {
+      const redirectUrl = makeRedirectUri({
+        scheme: 'gestura',
+        path: 'auth-callback',
+        useProxy: true, 
+      });
+  
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'facebook',
+        options: {
+          redirectTo: redirectUrl,
+        },
+      });
+  
+      if (error) throw error; 
+  
+      if (data?.url) {
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+  
+        if (result.type === 'success' && result.url) {
+          const params = new URL(result.url).searchParams;
+          const access_token = params.get('access_token');
+          const refresh_token = params.get('refresh_token');
+  
+          if (access_token && refresh_token) {
+            await supabase.auth.setSession({
+              access_token,
+              refresh_token
+            });
+            router.replace('/(tabs)/home');
+          }
+        }
+      }
+    } catch (error) {
+      Alert.alert('Error', error.message || 'Something went wrong with Facebook login.');
+    }
+  };
+  
 
 
   const handleCreateAccountPress = () => {
@@ -91,11 +136,13 @@ export default function Login() {
               className="w-[40px] h-[40px]"
               resizeMode="contain"
             />
-            <Image
-              source={icons.fb}
-              className="w-[45px] h-[45px]"
-              resizeMode="contain"
-            />
+             <TouchableOpacity onPress={signInWithFacebook}>
+              <Image
+                source={icons.fb}
+                className="w-[45px] h-[45px]"
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
           </View>
 
           <View className="mt-3 flex-row justify-center">

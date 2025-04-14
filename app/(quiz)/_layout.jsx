@@ -1,12 +1,19 @@
-import { View, Text } from 'react-native'
-import React from 'react'
+import React from 'react';
+import { Stack } from 'expo-router';
 
 const _layout = () => {
   return (
-    <View>
-      <Text>_layout</Text>
-    </View>
-  )
-}
+    <Stack>
+      <Stack.Screen 
+        name="(sectionOne)/lessonOne"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="TestResult"
+        options={{ headerShown: false }}
+      />
+    </Stack>
+  );
+};
 
-export default _layout
+export default _layout;

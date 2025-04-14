@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
+import { ProgressProvider } from './src/context/ProgressContext';
 
 import "./global.css";
 
@@ -26,7 +27,9 @@ const RootLayout = () => {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }} />
+    <ProgressProvider>
+       <Stack screenOptions={{ headerShown: false }} />
+    </ProgressProvider>
   );
 };
 

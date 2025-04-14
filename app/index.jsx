@@ -1,15 +1,17 @@
-import { View, Text, ScrollView, Image } from 'react-native'
-import React from 'react'
-import { Redirect, router } from 'expo-router'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import images from "@/constants/images"
-import CustomButton from '@/components/CustomButton'
+import { View, Text, ScrollView, Image } from 'react-native';
+import React from 'react';
+import { useRouter } from 'expo-router';  // Changed import
+import { SafeAreaView } from 'react-native-safe-area-context';
+import images from "../constants/images";
+import CustomButton from '../components/CustomButton';
 
-export default function index() {
+export default function Index() {
+  const router = useRouter();  // Proper hook usage
+
   return (
     <SafeAreaView className="bg-gray h-full">
-      <ScrollView contentContainerStyle={{height: '100%'}}>
-        <View className='w-full items-center min-h-[85vh] px-4 m'>
+      <ScrollView contentContainerStyle={{ height: '100%' }}>
+        <View className='w-full items-center min-h-[85vh] px-4'>
           <Image 
             source={images.logo}
             className="w-[120px] h-[80px] mt-15 mb-20"
@@ -17,11 +19,11 @@ export default function index() {
           />
           <Image
             source={images.Students}
-            className="max-w--[280px] w-full max-h--[230px] mt-10"
+            className="max-w-[280px] w-full max-h-[230px] mt-10"
             resizeMode='contain'
           />
           <Text className="text-2xl text-primary font-OsSemibold text-center mt-8 mb-10">
-          Learn Filipino Sign Language For An Inclusive Future!
+            Learn Filipino Sign Language For An Inclusive Future!
           </Text>
 
           <CustomButton
@@ -38,10 +40,8 @@ export default function index() {
             containerStyles="w-full mt-5"
             textStyles="text-2xl font-Osmedium text-violet-950"
           />
-
         </View>
       </ScrollView>
-
     </SafeAreaView>
-  )
+  );
 }
