@@ -11,35 +11,34 @@ import { avatars } from '../constants/avatars';
 
 export default function Index() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [lastUser, setLastUser] = useState(null);
   const [menuVisible, setMenuVisible] = useState(false);
 
+  // Load cached user only (no redirect yet)
   useEffect(() => {
     const checkCachedUser = async () => {
       try {
         const cachedUser = await AsyncStorage.getItem('lastUser');
-        if (cachedUser) setLastUser(JSON.parse(cachedUser));
+        if (cachedUser) {
+          setLastUser(JSON.parse(cachedUser));
+        }
       } catch (error) {
         console.error('Error loading cached user:', error);
       }
     };
-    
     checkCachedUser();
   }, []);
 
-  // Handle continue with cached user
+  // Continue as the cached user if session matches
   const handleContinue = async () => {
     if (!lastUser) return;
-    
+
     try {
-      // Check if session still valid
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (session?.user?.email === lastUser.email) {
         router.push('/(tabs)/home');
       } else {
-        // Redirect to login with cached email
         router.push({ pathname: '/(auth)/Login', params: { email: lastUser.email } });
       }
     } catch (error) {
@@ -66,6 +65,16 @@ export default function Index() {
     );
   };
 
+  const handleLoginAnotherAccount = async () => {
+    try {
+      await supabase.auth.signOut();
+      await AsyncStorage.removeItem('lastUser');
+      router.push('/(auth)/Login');
+    } catch (error) {
+      Alert.alert('Error', 'Could not log out properly');
+    }
+  };
+
   const closeMenu = () => {
     setMenuVisible(false);
   };
@@ -88,20 +97,18 @@ export default function Index() {
             Learn Filipino Sign Language For An Inclusive Future!
           </Text>
 
-          {!isAuthenticated && lastUser ? (
+          {lastUser ? (
             <>
               <TouchableOpacity
-                onPress={() => router.push('/(tabs)/home')}
-                className="flex-row items-center bg-white border border-violet-950 rounded-2xl px-4 py-3 mb-4 mt-2 w-[95%]"
+                onPress={handleContinue}
+                className="flex-row items-center bg-white border border-violet-950 rounded-2xl px-4 py-3 mt-2 w-[95%]"
               >
-                {/* Avatar */}
                 <Image
                   source={lastUser?.avatar && avatars[lastUser.avatar] ? avatars[lastUser.avatar] : images.avatarPlaceholder}
                   className="w-12 h-12 rounded-full ml-3 mr-4 border border-violet-950 bg-gray-300"
                   resizeMode="cover"
                 />
 
-                {/* Text Info */}
                 <View>
                   <Text className="font-Mextrabold text-lg text-violet-950">{lastUser.username}</Text>
                   <Text className="text-sm text-gray-400">{lastUser.email}</Text>
@@ -115,7 +122,7 @@ export default function Index() {
                 </TouchableOpacity>
               </TouchableOpacity>
 
-              {/* Menu Modal */}
+              {/* Modal Menu */}
               <Modal
                 visible={menuVisible}
                 transparent={true}
@@ -145,12 +152,19 @@ export default function Index() {
                   </View>
                 </TouchableOpacity>
               </Modal>
-              
+
               <TouchableOpacity
-                onPress={() => router.push('/(auth)/Login')}
+                onPress={handleLoginAnotherAccount}
+                className="flex-row items-center bg-gray-50 justify-center border-gray-300 border-b-4 rounded-2xl px-4 py-5 mb-2 mt-2 w-[95%]"
+              >
+                <Text className="font-Osbold text-xl text-gray-300">Log In Other Account</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => router.push('/(auth)/Register')}
                 className="flex-row items-center bg-gray-50 justify-center border-gray-300 border-b-4 rounded-2xl px-4 py-5 mb-6 mt-2 w-[95%]"
               >
-                <Text className="font-Osbold text-xl items-center text-center text-gray-300">Log In Other Account</Text>
+                <Text className="font-Osbold text-xl text-gray-300">Create New Account</Text>
               </TouchableOpacity>
             </>
           ) : (

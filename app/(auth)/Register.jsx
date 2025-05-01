@@ -30,6 +30,22 @@ export default function Register() {
     }
   
     setLoading(true);
+
+    // Check if username already exists
+const { data: existingUser, error: usernameError } = await supabase
+.from('profiles')
+.select('id')
+.eq('username', form.username.trim())
+.maybeSingle();
+
+if (usernameError) throw usernameError;
+
+if (existingUser) {
+Alert.alert('Error', 'Username is already taken.');
+setLoading(false);
+return;
+}
+
   
     try {
       // Step 1: Sign up with Supabase Auth
@@ -40,14 +56,14 @@ export default function Register() {
           data: { username: form.username.trim() },
         },
       });
-
+  
       if (signUpError) throw signUpError;
-
+  
       // Step 2: Insert into 'profiles' table
       const userId = signUpData.user?.id;
-
+  
       if (!userId) throw new Error('User ID not returned');
-
+  
       const { error: profileError } = await supabase
         .from('profiles')
         .insert([
@@ -57,12 +73,63 @@ export default function Register() {
             username: form.username.trim(),
           },
         ]);
+  
+        if (profileError) {
+          console.error('Profile Insert Error:', profileError);
+          throw profileError;
+        }
+  
+      // Step 3: Unlock the first lesson in section 1
+      const { data: firstLesson, error: lessonError } = await supabase
+        .from('lessons')
+        .select('id')
+        .eq('section_id', 1)
+        .order('order_position', { ascending: true })
+        .limit(1)
+        .single();
+  
+        if (lessonError) {
+          console.error('Lesson Fetch Error:', lessonError);
+          throw lessonError;
+        }
 
-      if (profileError) throw profileError;
+        if (!firstLesson) throw new Error('No lessons found in section 1');
+  
+      // Check if progress already exists
+      const { data: existingProgress, error: checkError } = await supabase
+      .from('lesson_progress')
+      .select('user_id, lesson_id')
+      .eq('user_id', userId)
+      .eq('lesson_id', parseInt(firstLesson.id, 10)) 
+      .maybeSingle();
+    
+    if (checkError) throw checkError;if (checkError) {
+      console.error('Error fetching lesson progress:', checkError);
+      return;
+    }
+    
+    
+    if (!existingProgress) {
+      // Insert new progress if it doesn't exist
+      const { error: progressError } = await supabase
+        .from('lesson_progress')
+        .insert([
+          {
+            user_id: userId,
+            lesson_id: firstLesson.id,
+            completed: false,
+            unlocked: true,
+            updated_at: new Date().toISOString(),
+          },
+        ]);
+    
+      if (progressError) throw progressError;
+    }
 
+  
       // Success
       Alert.alert('Success', 'Account created successfully!');
-      router.replace('/(quiz)/Welcome');
+      router.replace('/(auth)/Welcome');
     } catch (error) {
       console.error('Registration Error:', error);
       Alert.alert('Error', error.message || 'Registration failed. Please try again.');

@@ -1,6 +1,6 @@
 import { View, TouchableOpacity, Text, Image } from 'react-native';
 import React, { useState, useRef } from 'react';
-// import Video from 'react-native-video';
+import Video from 'react-native-video';
 
 const Multiple_Select = ({ question, options, correctAnswer, videoSource, showFeedback, onSelect, image }) => {
   const [selectedLetters, setSelectedLetters] = useState([]);
@@ -36,15 +36,14 @@ const Multiple_Select = ({ question, options, correctAnswer, videoSource, showFe
       </View>
       {/* Video Player */}
       <View className="w-full aspect-video bg-black rounded-xl overflow-hidden mb-2">
-        {/* <Video
+              <Video
           ref={videoRef}
-          source={videoSource}
+          source={{ uri: challenge.video_url }} // <-- from challenge prop
           style={{ width: '100%', height: '100%' }}
           controls={true}
           repeat={true}
           resizeMode="contain"
-        /> */}
-        <Text>Video</Text>
+          />
       </View>
 
       <Text className="p-5 font-Osmedium text-violet-950 text-lg text-center">Select the letters in the {"\n"}correct order as shown in the video</Text>

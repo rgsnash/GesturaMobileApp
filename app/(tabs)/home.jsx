@@ -30,57 +30,61 @@ const Home = () => {
 
   const fetchLessons = async () => {
     try {
+      const user = await getCurrentUser();
+      if (!user) return;
+
       const { data: lessonsData, error: lessonsError } = await supabase
         .from('lessons')
         .select(`
-          *,
+          id,
+          order_position,
+          section_id,
+          title,
           lesson_progress (
             completed,
-            is_unlocked
+            user_id
           )
         `)
         .eq('section_id', sectionId)
         .order('order_position', { ascending: true });
-  
-      const transformedLessons = lessonsData.map(lesson => ({
-        ...lesson,
-        is_unlocked: lesson.lesson_progress[0]?.unlocked || false,
-        progress: lesson.lesson_progress[0] || null,
-      }));
-  
+
+      if (lessonsError) throw lessonsError;
+
+      const transformedLessons = lessonsData.map((lesson, index) => {
+        const isFirstLesson = index === 0;
+        const lessonProgress = lesson.lesson_progress.find(p => p.user_id === user.id);
+        const isCompleted = lessonProgress?.completed || false;
+
+        let isUnlocked = false;
+        if (isFirstLesson) {
+          isUnlocked = true;
+        } else {
+          const prevLesson = lessonsData[index - 1];
+          const prevProgress = prevLesson.lesson_progress.find(p => p.user_id === user.id);
+          const prevCompleted = prevProgress?.completed || false;
+          isUnlocked = prevCompleted;
+        }
+
+        return {
+          ...lesson,
+          is_unlocked: isUnlocked,
+          is_completed: isCompleted,
+          progress: lessonProgress || null,
+        };
+      });
+
       setLessons(transformedLessons);
     } catch (error) {
       console.error('Fetch error:', error.message);
     }
   };
 
-  // Subscribe to real-time updates
-  useEffect(() => {
-    const channel = supabase
-      .channel('lessons-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'lesson_progress',
-        },
-        (payload) => {
-          console.log('Change detected:', payload);
-          fetchLessons();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  // Fetch when screen focuses or refresh param changes
+  // 🧠 Important: Call fetchLessons when the screen gains focus
   useFocusEffect(
     useCallback(() => {
-      fetchLessons();
+      checkSession().then((valid) => {
+        if (valid) fetchLessons();
+      });
     }, [refresh])
   );
 
@@ -110,7 +114,6 @@ const Home = () => {
               const isCompleted = lesson.progress?.completed;
               const isFirstLesson = index === 0;
               const isUnlocked = lesson.is_unlocked || isFirstLesson;
-  
 
               return (
                 <View

@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, Animated } from 'react-native';
+import { View, Text, ScrollView, Animated, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../lib/supabase';
-import { upsertLessonProgress, unlockNextLesson } from '../lib/schema'
+import { upsertLessonProgress, unlockNextLesson } from '../lib/schema';
 import ConfettiCannon from 'react-native-confetti-cannon';
-import { useHeartSystem as useHearts, HeartDisplay } from './Hearts'
+import { useHeartSystem as useHearts, HeartDisplay } from './Hearts';
 
 import QuestionFactory from '../components/questions/QuestionFactory';
 import BottomActionArea from '../components/BottomAction';
@@ -13,12 +13,22 @@ import BottomActionArea from '../components/BottomAction';
 const QuizScreen = ({ lessonId, sectionId }) => {
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Add this useEffect to get user
+  // Fetch user on mount
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) throw error;
+        if (!user) throw new Error('User not authenticated');
+        setUser(user);
+      } catch (error) {
+        console.error('Error fetching user:', error.message);
+        router.replace('/(auth)/Login');
+      } finally {
+        setIsLoading(false);
+      }
     };
     getUser();
   }, []);
@@ -76,26 +86,25 @@ const QuizScreen = ({ lessonId, sectionId }) => {
     setSelectedOption(id);
   };
 
-  const handleSubmit = async () => { // Make async
+  const handleSubmit = async () => {
     if (!selectedOption || !currentChallenge || status !== 'none') return;
-  
+
     if (correctOption?.id === selectedOption) {
       setStatus('correct');
       setCorrectAnswers(prev => prev + 1);
     } else {
       // Prevent losing hearts if already at 0
       if (hearts > 0) {
-        await decrementHearts(); // Wait for decrement to complete
+        await decrementHearts();
       }
       setStatus('wrong');
-      
-      // Optional: Handle zero hearts scenario
-      // if (hearts === 1) { // Was about to lose last heart
-      //   router.replace('/hearts-empty-screen'); // Or your custom handler
-      // }
+
+      // Handle zero hearts scenario
+      if (hearts <= 1) { // After decrementing, hearts might be 0
+        router.replace('/hearts-empty-screen');
+      }
     }
   };
-
 
   const handleContinue = async () => {
     if (!selectedOption || !currentChallenge) return;
@@ -112,17 +121,27 @@ const QuizScreen = ({ lessonId, sectionId }) => {
     setShowConfetti(true);
 
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw userError;
+      if (!user) throw new Error('User not authenticated');
 
       const finalScore = (correctAnswers / challenges.length) * 100;
       const passed = finalScore >= 50;
 
       if (passed) {
-        await upsertLessonProgress({ user_id: user.id, lesson_id, completed: true });
-        await unlockNextLesson(lessonId, sectionId);
+        // Mark the current lesson as completed
+        await upsertLessonProgress({
+          user_id: user.id,
+          lesson_id: lessonId,
+          completed: true,
+        });
+
+        // Unlock the next lesson
+        const nextLesson = await unlockNextLesson(lessonId, sectionId, user.id);
+        if (!nextLesson) {
+          console.log('No more lessons to unlock in this section.');
+        }
       }
-      
+
+      // Navigate to the TestResult screen
       router.replace({
         pathname: '/(quiz)/TestResult',
         params: {
@@ -132,9 +151,10 @@ const QuizScreen = ({ lessonId, sectionId }) => {
           sectionId,
         },
       });
-
     } catch (error) {
-      console.error('Completion error:', error);
+      console.error('Completion error:', error.message);
+      Alert.alert('Error', 'Failed to complete lesson: ' + error.message);
+      // Still navigate to TestResult even if there's an error, so the user isn't stuck
       router.replace({
         pathname: '/(quiz)/TestResult',
         params: {
@@ -147,7 +167,13 @@ const QuizScreen = ({ lessonId, sectionId }) => {
     }
   };
 
-  if (!challenges.length || !currentChallenge) return null;
+  if (isLoading || !challenges.length || !currentChallenge) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text className="text-gray-500">Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-white">
@@ -177,6 +203,7 @@ const QuizScreen = ({ lessonId, sectionId }) => {
             question={currentChallenge.question}
             options={currentChallenge.challenge_options}
             image={currentChallenge.image_src}
+            video={currentChallenge.video_url}
             correctOptions={[correctOption?.id]}
             selectedOption={selectedOption}
             showFeedback={status !== 'none'}

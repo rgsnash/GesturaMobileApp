@@ -71,6 +71,9 @@ const Bag = () => {
       <Text className="font-Mextrabold text-violet-950 text-3xl text-center mt-10">
         GESTURA
       </Text>
+      <Text className="font-Osregular text-violet-950 text-xl text-center mt-5">
+        Here's what you've collected!
+      </Text>
 
       <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: 20 }}>
         {bagAssets.length > 0 ? (
