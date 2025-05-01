@@ -21,7 +21,9 @@
       "infoPlist": {
         "CFBundleURLTypes": [
           {
-            "CFBundleURLSchemes": ["gestura"]
+            "CFBundleURLSchemes": [
+              "gestura"
+            ]
           }
         ]
       }
@@ -40,9 +42,27 @@
               "host": "oauth-redirect"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        },
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "https",
+              "host": "poetic-lobster-5.clerk.accounts.dev",
+              "pathPrefix": "/oauth-redirect/"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
-      ]
+      ],
+      "package": "com.ashleymuiu.GesturaMobileApp"
     },
     "web": {
       "bundler": "metro",
@@ -61,7 +81,7 @@
         }
       ],
       [
-        "expo-font", 
+        "expo-font",
         {
           "fonts": [
             "./assets/fonts/Oswald-Bold.ttf",
@@ -73,7 +93,8 @@
             "./assets/fonts/Montserrat-ExtraBold.ttf"
           ]
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": false

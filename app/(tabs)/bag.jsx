@@ -1,105 +1,99 @@
-// Bag.jsx
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import CustomButton from '../../components/CustomButton'; // adjust path as needed
-import { ProgressService } from '../src/services/ProgressService'; // adjust path as needed
-import { router } from 'expo-router';
+import { View, Text, ScrollView, Image, Animated } from 'react-native';
+import { supabase } from '../../lib/supabase';
 
-const FlashCard = ({ letter }) => (
-  <View style={styles.card}>
-    <Text style={styles.cardText}>{letter}</Text>
-  </View>
-);
-
-const Bag = ({ navigation }) => {
-  const [learnedLetters, setLearnedLetters] = useState([]);
+const Bag = () => {
+  const [bagAssets, setBagAssets] = useState([]);
+  const [fadeAnim] = useState(new Animated.Value(0));
 
   useEffect(() => {
-    const fetchLearnedLetters = async () => {
+    const fetchBagAssets = async () => {
       try {
-        const progress = await ProgressService.getProgress();
-        if (progress) {
-          setLearnedLetters(progress.learnedLetters || []);
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+        if (userError) {
+          console.error('Error getting user:', userError);
+          return;
+        }
+
+        if (!user) {
+          console.error('No logged-in user found.');
+          return;
+        }
+
+        const userId = user.id;
+
+        const { data: progressData, error: progressError } = await supabase
+          .from('lesson_progress')
+          .select('lesson_id')
+          .eq('user_id', userId)
+          .eq('completed', true);
+
+        if (progressError) {
+          console.error('Error fetching lesson progress:', progressError);
+          return;
+        }
+
+        const completedLessonIds = progressData.map(p => p.lesson_id);
+       
+
+        if (completedLessonIds.length > 0) {
+          const { data: assetsData, error: assetsError } = await supabase
+            .from('bag_assets')
+            .select('id, lesson_id, image_url, name')
+            .in('lesson_id', completedLessonIds);
+
+          if (assetsError) {
+            console.error('Error fetching bag assets:', assetsError);
+            return;
+          }
+
+          setBagAssets(assetsData);
+      
+
+          // Start animation after loading
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }).start();
         }
       } catch (error) {
-        console.error('Error fetching learned letters:', error);
+        console.error('Unexpected error:', error);
       }
     };
 
-    fetchLearnedLetters();
+    fetchBagAssets();
   }, []);
 
-  const goBack = () => {
-    // Use your navigation method (for example, using expo-router or React Navigation)
-    // For example, if you're using react-navigation:
-    if (navigation && navigation.goBack) {
-      navigation.goBack();
-    } else {
-      console.log('Navigation not provided');
-    }
-  };
-
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-white p-5">
       <Text className="font-Mextrabold text-violet-950 text-3xl text-center mt-10">
-                        GESTURA
-                      </Text>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {learnedLetters.length > 0 ? (
-          learnedLetters.map((letter, index) => (
-            <FlashCard key={index} letter={letter} />
+        GESTURA
+      </Text>
+
+      <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: 20 }}>
+        {bagAssets.length > 0 ? (
+          bagAssets.map((asset) => (
+            <Animated.View
+              key={asset.id}
+              style={{ opacity: fadeAnim }}
+              className="bg-gray-50 rounded-lg p-4 m-2 border-slate-300 border-2 border-b-4 w-[40%] items-center shadow-md"
+            >
+              <Image 
+                source={{ uri: asset.image_url }}
+                className="w-24 h-24 rounded-lg mb-2"
+                resizeMode="contain"
+              />
+              <Text className="font-OsSemibold text-purple-950 text-center text-lg">{asset.name}</Text>
+            </Animated.View>
           ))
         ) : (
-          <Text style={styles.noContentText}>No letters learned yet!</Text>
+          <Text className="text-gray-400 text-center mt-10">Nothing collected yet!</Text>
         )}
       </ScrollView>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-    padding: 20,
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-    color: '#3F2A7E',
-  },
-  scrollContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    paddingBottom: 20,
-  },
-  card: {
-    backgroundColor: '#F3F4F6',
-    width: 100,
-    height: 100,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    margin: 10,
-    elevation: 3,
-  },
-  cardText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#3F2A7E',
-  },
-  noContentText: {
-    fontSize: 18,
-    color: 'gray',
-    textAlign: 'center',
-    marginTop: 50,
-  },
-  buttonContainer: {
-    alignItems: 'center',
-  },
-});
 
 export default Bag;

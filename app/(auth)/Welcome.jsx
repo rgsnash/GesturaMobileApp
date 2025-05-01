@@ -69,7 +69,7 @@
         setStep(step + 1);
       } else {
         setShowConfetti(true);
-        router.push('/Test'); // Redirect to Home
+        router.push('/home'); // Redirect to Home
       }
     };
 

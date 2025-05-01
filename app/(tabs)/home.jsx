@@ -1,66 +1,167 @@
-import { View, Text, ScrollView, Image, TouchableOpacity } from 'react-native'
-import React, { useState } from 'react'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import images from "../../constants/images"
-import CustomButton from '../../components/CustomButton'
-import { router } from 'expo-router'
+import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import images from '../../constants/images';
+import CustomButton from '../../components/CustomButton';
+import { router, useLocalSearchParams } from 'expo-router';
+import { supabase } from '../../lib/supabase';
 
-const lessons = [
-  { id: 1, status: "unlocked" },  // Active lesson
-  { id: 2, status: "locked" },
-  { id: 3, status: "locked" },
-  { id: 4, status: "locked" },
-  { id: 5, status: "locked" }
-];
+const sectionId = 1;
 
 const Home = () => {
-  const [progress, setProgress] = useState(1); // Current unlocked lesson
+  const [lessons, setLessons] = useState([]);
+  const { refresh } = useLocalSearchParams();
 
-  const handleLessonComplete = () => {
-    if (progress < lessons.length) {
-      setProgress(progress + 1); // Unlock next lesson
+  const checkSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      router.replace('/(auth)/Login');
+      return false;
+    }
+    return true;
+  };
+
+  const getCurrentUser = async () => {
+    const { data, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    return data.user;
+  };
+
+  const fetchLessons = async () => {
+    try {
+      const { data: lessonsData, error: lessonsError } = await supabase
+        .from('lessons')
+        .select(`
+          *,
+          lesson_progress (
+            completed,
+            is_unlocked
+          )
+        `)
+        .eq('section_id', sectionId)
+        .order('order_position', { ascending: true });
+  
+      const transformedLessons = lessonsData.map(lesson => ({
+        ...lesson,
+        is_unlocked: lesson.lesson_progress[0]?.unlocked || false,
+        progress: lesson.lesson_progress[0] || null,
+      }));
+  
+      setLessons(transformedLessons);
+    } catch (error) {
+      console.error('Fetch error:', error.message);
     }
   };
 
+  // Subscribe to real-time updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('lessons-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'lesson_progress',
+        },
+        (payload) => {
+          console.log('Change detected:', payload);
+          fetchLessons();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Fetch when screen focuses or refresh param changes
+  useFocusEffect(
+    useCallback(() => {
+      fetchLessons();
+    }, [refresh])
+  );
+
   return (
-    <ScrollView>
-      <SafeAreaView>
-      <View className='w-full items-center min-h-[85vh] px-4 m'>
-          <Image 
-                      source={images.logo}
-                      className="w-[35%] h-[15%] mt-15"
-                      resizeMode="contain"
-                    />
+    <SafeAreaView className="flex-1 bg-white">
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="w-full items-center px-4">
+          <Image
+            source={images.logo}
+            className="w-32 h-32"
+            resizeMode="contain"
+          />
+
           <CustomButton
             title="Section 1: Alphabets"
             variant="primary"
             handlePress={() => router.push('/(tabs)/bag')}
-            containerStyles="rounded-full w-full"
+            containerStyles="rounded-lg h-[70px] w-full mb-8"
             textStyles="text-2xl font-Osmedium text-gray-50"
           />
 
-          <TouchableOpacity onPress={handleLessonComplete} className="mt-5">
-            <Text className="bg-gray-200 px-4 py-2 rounded-lg">START</Text>
-          </TouchableOpacity>
+          <View className="w-full">
+            {lessons.map((lesson, index) => {
+              const isCompleted = lesson.progress?.completed;
+              const isFirstLesson = index === 0;
+              const isUnlocked = lesson.is_unlocked || isFirstLesson;
+  
 
-          <View className="flex-row flex-wrap justify-center mt-5">
-            {lessons.map((lesson, index) => (
-              <TouchableOpacity 
-              key={lesson.id} 
-              disabled={index >= progress} 
-              onPress={() => router.push('(sectionOne)/lessonOne')}
-            >
-              <Image 
-                source={index < progress ? images.Unlocked1 : images.Locked} 
-                className="w-16 h-16 m-2"
-              />
-            </TouchableOpacity>
-            ))}
+              return (
+                <View
+                  key={lesson.id}
+                  className={`mb-16 ${index % 2 === 0 ? 'items-start' : 'items-end'}`}
+                >
+                  {isFirstLesson && !isCompleted && (
+                    <View className="mb-2 rounded-lg bg-gray-50 border border-purple-950 ml-4">
+                      <Text className="font-Osbold text-lg text-purple-950 text-center px-8 py-1">
+                        {isFirstLesson ? 'Start Here' : 'Continue Learning'}
+                      </Text>
+                    </View>
+                  )}
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (isUnlocked) {
+                        router.push({
+                          pathname: `/(quiz)/${sectionId}/${lesson.id}`,
+                          params: { refresh: Date.now() },
+                        });
+                      }
+                    }}
+                    className={`p-2 ${index % 2 === 0 ? 'ml-4' : 'mr-4'}`}
+                  >
+                    <Image
+                      source={
+                        isCompleted
+                          ? images.completed
+                          : isUnlocked || isFirstLesson
+                          ? images.Unlocked1
+                          : images.locked
+                      }
+                      className="w-28 h-28"
+                    />
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
           </View>
         </View>
-      </SafeAreaView>
-    </ScrollView>
-  )
-}
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    paddingBottom: 120,
+    minHeight: '100%',
+  },
+});
 
 export default Home;

@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
-import { ProgressProvider } from './src/context/ProgressContext';
+import { createClient } from '@supabase/supabase-js';
+import { SessionContextProvider } from '@supabase/auth-helpers-react';
+import { supabase } from '../lib/supabase';
 
 import "./global.css";
 
@@ -27,9 +29,9 @@ const RootLayout = () => {
   }
 
   return (
-    <ProgressProvider>
-       <Stack screenOptions={{ headerShown: false }} />
-    </ProgressProvider>
+    <SessionContextProvider supabaseClient={supabase}>
+      <Stack screenOptions={{ headerShown: false }} />
+    </SessionContextProvider>
   );
 };
 

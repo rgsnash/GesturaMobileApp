@@ -1,19 +1,9 @@
+// app/(quiz)/_layout.js
 import React from 'react';
 import { Stack } from 'expo-router';
 
-const _layout = () => {
+export default function QuizLayout() {
   return (
-    <Stack>
-      <Stack.Screen 
-        name="(sectionOne)/lessonOne"
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen 
-        name="TestResult"
-        options={{ headerShown: false }}
-      />
-    </Stack>
+    <Stack screenOptions={{ headerShown: false }} />
   );
-};
-
-export default _layout;
+}

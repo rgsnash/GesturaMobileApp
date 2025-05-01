@@ -1,28 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Stack } from 'expo-router';
-import { supabase } from '../../lib/gesturadb';
 
 const AuthLayout = () => {
-  const [session, setSession] = useState(null);
-
-  useEffect(() => {
-    
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => {
-      listener?.subscription?.unsubscribe();
-    };
-  }, []);
-
   return (
-     <Stack initialRouteName="Welcome">
+    <Stack>
       <Stack.Screen 
         name="Welcome"
         options={{ headerShown: false }}

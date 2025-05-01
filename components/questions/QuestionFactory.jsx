@@ -1,21 +1,22 @@
-import React from 'react';
-import MultipleChoice_One from './MultipleChoice_One';
-import HandRecognition from './HandRecognition';
-import MultipleChoiceTwo from './MultipleChoiceTwo';
-import MultipleChoiceThree from './MultipleChoiceThree';
+import Image_Select from './Image_Select'; 
+import Letter_Select from './Letter_Select'
+import Matching_Type from './Matching_Type';
+import Multiple_Select from './Multiple_Select'
 
 const QuestionFactory = ({ type, ...props }) => {
-  switch(type.toLowerCase()) { // Handle case variations
-    case 'hand-recognition':
-      return <HandRecognition {...props} />;
-    case 'multiple-choiceone':
-      return <MultipleChoice_One {...props} />;
-    case 'multiple-choicetwo':
-      return <MultipleChoiceTwo {...props} />;
-    case 'multiple-choicethree':
-      return <MultipleChoiceThree {...props} />;
+  const normalizedType = type?.toLowerCase().replace(/[_\s]/g, '');
+
+  switch (normalizedType) {
+    case 'letterselect': // Updated from 'letter_select'
+      return <Letter_Select {...props} />;
+    case 'imageselect': // Updated from 'image_select'
+      return <Image_Select {...props} />;
+    case 'multiselect':
+      return <Multiple_Select {...props} />;
+    case 'matching':
+      return <Matching_Type {...props} />;
     default:
-      return <MultipleChoice_One {...props} />;
+      return null; // Return null instead of empty string for React components
   }
 };
 

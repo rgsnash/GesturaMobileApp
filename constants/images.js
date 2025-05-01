@@ -8,6 +8,8 @@ import running from "../assets/images/running.png"
 import Unlocked1 from "../assets/images/Unlocked1.png"
 import celebrate from "../assets/images/celebrate.png"
 import locked from "../assets/images/locked.png"
+import tryagain from "../assets/images/tryagain.png"
+import completed from "../assets/images/completed.png"
 
 
-export default { logo, Students, notifgirl, cameragirl, didyouknow, questiongirl, running, Unlocked1, celebrate, locked};
+export default { logo, Students, notifgirl, cameragirl, didyouknow, questiongirl, running, Unlocked1, celebrate, locked, tryagain, completed };
